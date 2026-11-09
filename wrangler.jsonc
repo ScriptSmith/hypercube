@@ -1,0 +1,12 @@
+// The site as a Worker with static assets, deployed alongside the Pages project. No Worker code:
+// every request is served from dist. `wrangler pages deploy` ignores this file (it has no
+// pages_build_output_dir) and warns that it did.
+{
+  "name": "hypercube",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "hypercube.adsm.dev", "custom_domain": true }],
+  "workers_dev": true,
+  // Branch builds from the Actions tab upload a version with its own preview URL.
+  "preview_urls": true,
+}

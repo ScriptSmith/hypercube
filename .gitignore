@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-*/
+coverage/
+test-results/
+test-results-*/
+playwright-report/
+shots/
+.vite/
+*.log
+.DS_Store
+.wrangler/

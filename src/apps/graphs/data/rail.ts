@@ -1,0 +1,276 @@
+import type { GraphDef } from "../types";
+import { RAIL_ICONS } from "./rail.icons";
+
+/**
+ * Longitude shrinks with latitude, so x is scaled by the cosine of Brisbane's latitude. The
+ * map is then stretched a little east to west, because the coast runs north to south and a
+ * true-shaped map would leave wide displays mostly empty.
+ */
+const COS = Math.cos((27.5 * Math.PI) / 180) * 1.5;
+
+/**
+ * Stations sit where a map would put them, but the city centre and the busy inner suburbs
+ * are spread out so every station has room for its icon and name. Latitude is y (north is up).
+ */
+const at = (lat: number, lon: number) => ({ x: lon * COS, y: lat });
+
+/**
+ * A map of main stations on the South East Queensland suburban rail network. A link joins two
+ * stations that follow one another on a line in this picture; smaller stations between them
+ * are left out.
+ */
+const rail: GraphDef = {
+  id: "rail",
+  title: "Brisbane rail",
+  blurb: "Main stations on Brisbane's suburban trains, from Ipswich to the Gold Coast.",
+  order: 10,
+  caption: "Tap a station",
+  directed: false,
+  layout: "fixed",
+  edgeMeaning: { in: "", out: "Next to" },
+  sources: [
+    "Wikipedia articles for each Queensland Rail City network line (Ipswich/Rosewood, Springfield, Beenleigh, Gold Coast, Cleveland, Caboolture, Redcliffe Peninsula, Ferny Grove, Shorncliffe, Doomben and Airport lines): station order and junctions, checked October 2026.",
+    "Queensland Rail and Translink published network maps for line names and interchanges.",
+    "Station positions are approximate and moved apart on purpose; they are not survey data.",
+  ],
+  roles: [
+    { id: "trunk", title: "Shared city stations", color: "#999999" },
+    { id: "west", title: "Ipswich and Springfield", color: "#009e73" },
+    { id: "south", title: "Beenleigh and Gold Coast", color: "#56b4e9" },
+    { id: "east", title: "Cleveland", color: "#e69f00" },
+    { id: "nw", title: "Ferny Grove", color: "#cc79a7" },
+    { id: "north", title: "Caboolture, Redcliffe, Shorncliffe, Doomben", color: "#0072b2" },
+    { id: "airport", title: "Airport", color: "#d55e00" },
+  ],
+  icons: RAIL_ICONS,
+  nodes: [
+    {
+      id: "roma",
+      name: "Roma Street",
+      role: "trunk",
+      icon: "interchange",
+      note: "City centre station where lines from the west and the south connect.",
+      pos: at(-27.5, 152.985),
+    },
+    {
+      id: "central",
+      name: "Central",
+      role: "trunk",
+      icon: "interchange",
+      note: "A city station on Ann Street, close to Anzac Square.",
+      pos: at(-27.455, 153.065),
+    },
+    {
+      id: "valley",
+      name: "Fortitude Valley",
+      role: "trunk",
+      icon: "train",
+      note: "An underground station serving the Valley's shops, cafes and night spots.",
+      pos: at(-27.38, 153.125),
+    },
+    {
+      id: "eagle",
+      name: "Eagle Junction",
+      role: "trunk",
+      icon: "interchange",
+      note: "Trains for the airport and Doomben leave the main northern line here.",
+      pos: at(-27.295, 153.16),
+    },
+    {
+      id: "northgate",
+      name: "Northgate",
+      role: "trunk",
+      icon: "interchange",
+      note: "The Shorncliffe line and the Caboolture line go separate ways here.",
+      pos: at(-27.205, 153.15),
+    },
+    {
+      id: "boggo",
+      name: "Boggo Road",
+      role: "trunk",
+      icon: "interchange",
+      note: "Once called Park Road. The Cleveland line leaves the Beenleigh line here.",
+      pos: at(-27.59, 153.02),
+    },
+    {
+      id: "fernygrove",
+      name: "Ferny Grove",
+      role: "nw",
+      icon: "train",
+      note: "The end of the line in Brisbane's north-west.",
+      pos: at(-27.33, 153.02),
+    },
+    {
+      id: "petrie",
+      name: "Petrie",
+      role: "north",
+      icon: "interchange",
+      note: "The Redcliffe Peninsula line leaves the Caboolture line here.",
+      pos: at(-27.125, 153.09),
+    },
+    {
+      id: "caboolture",
+      name: "Caboolture",
+      role: "north",
+      icon: "train",
+      note: "Where the suburban line ends and the line to the Sunshine Coast carries on.",
+      pos: at(-27.04, 153.06),
+    },
+    {
+      id: "kipparing",
+      name: "Kippa-Ring",
+      role: "north",
+      icon: "train",
+      note: "The end of the Redcliffe Peninsula line.",
+      pos: at(-27.1, 153.2),
+    },
+    {
+      id: "shorncliffe",
+      name: "Shorncliffe",
+      role: "north",
+      icon: "train",
+      note: "The end of the line, a short walk from Moreton Bay.",
+      pos: at(-27.2, 153.27),
+    },
+    {
+      id: "intl",
+      name: "Int'l Airport",
+      role: "airport",
+      icon: "train",
+      note: "Serves the international terminal at Brisbane Airport.",
+      pos: at(-27.29, 153.28),
+    },
+    {
+      id: "domestic",
+      name: "Domestic Airport",
+      role: "airport",
+      icon: "train",
+      note: "Serves the domestic terminal at Brisbane Airport.",
+      pos: at(-27.37, 153.31),
+    },
+    {
+      id: "indooroopilly",
+      name: "Indooroopilly",
+      role: "west",
+      icon: "train",
+      note: "Serves the suburb and its large shopping centre.",
+      pos: at(-27.545, 152.9),
+    },
+    {
+      id: "darra",
+      name: "Darra",
+      role: "west",
+      icon: "interchange",
+      note: "The Springfield line branches off the Ipswich line here.",
+      pos: at(-27.6, 152.82),
+    },
+    {
+      id: "ipswich",
+      name: "Ipswich",
+      role: "west",
+      icon: "train",
+      note: "Serves the city of Ipswich, west of Brisbane. Many trains start here.",
+      pos: at(-27.62, 152.73),
+    },
+    {
+      id: "rosewood",
+      name: "Rosewood",
+      role: "west",
+      icon: "train",
+      note: "The western end of the suburban line from Brisbane.",
+      pos: at(-27.66, 152.64),
+    },
+    {
+      id: "springfield",
+      name: "Springfield",
+      role: "west",
+      icon: "train",
+      note: "The end of the Springfield line, in a planned community south-west of the city.",
+      pos: at(-27.69, 152.87),
+    },
+    {
+      id: "cannonhill",
+      name: "Cannon Hill",
+      role: "east",
+      icon: "train",
+      note: "Serves Cannon Hill in Brisbane's east.",
+      pos: at(-27.545, 153.12),
+    },
+    {
+      id: "wynnum",
+      name: "Wynnum",
+      role: "east",
+      icon: "train",
+      note: "Serves the bayside suburb of Wynnum, near Moreton Bay.",
+      pos: at(-27.5, 153.21),
+    },
+    {
+      id: "cleveland",
+      name: "Cleveland",
+      role: "east",
+      icon: "train",
+      note: "The end of the line, close to Moreton Bay in Redland City.",
+      pos: at(-27.58, 153.28),
+    },
+    {
+      id: "woodridge",
+      name: "Woodridge",
+      role: "south",
+      icon: "train",
+      note: "Serves Woodridge in the City of Logan.",
+      pos: at(-27.69, 153.06),
+    },
+    {
+      id: "beenleigh",
+      name: "Beenleigh",
+      role: "south",
+      icon: "train",
+      note: "Gold Coast trains carry on south from here.",
+      pos: at(-27.78, 153.11),
+    },
+    {
+      id: "helensvale",
+      name: "Helensvale",
+      role: "south",
+      icon: "train",
+      note: "Trains meet the G:link light rail here.",
+      pos: at(-27.87, 153.17),
+    },
+    {
+      id: "varsity",
+      name: "Varsity Lakes",
+      role: "south",
+      icon: "train",
+      note: "The end of the line on the Gold Coast.",
+      pos: at(-27.96, 153.22),
+    },
+  ],
+  edges: [
+    ["roma", "central"],
+    ["central", "valley"],
+    ["valley", "eagle"],
+    ["eagle", "northgate"],
+    ["eagle", "intl"],
+    ["intl", "domestic"],
+    ["northgate", "shorncliffe"],
+    ["northgate", "petrie"],
+    ["petrie", "caboolture"],
+    ["petrie", "kipparing"],
+    ["valley", "fernygrove"],
+    ["roma", "indooroopilly"],
+    ["indooroopilly", "darra"],
+    ["darra", "ipswich"],
+    ["ipswich", "rosewood"],
+    ["darra", "springfield"],
+    ["roma", "boggo"],
+    ["boggo", "cannonhill"],
+    ["cannonhill", "wynnum"],
+    ["wynnum", "cleveland"],
+    ["boggo", "woodridge"],
+    ["woodridge", "beenleigh"],
+    ["beenleigh", "helensvale"],
+    ["helensvale", "varsity"],
+  ],
+};
+
+export default rail;

@@ -1,0 +1,48 @@
+{
+  "units": {
+    "angles": "degrees",
+    "distance": "mm",
+    "wavelength": "angstrom",
+    "about": "round settings for the two detectors, chosen for the poster; scripts/xrd-maps.mjs reads the flat plate's for its simulated maps",
+    "chi": "tilt from flat; 0 means the sample lies flat in the beam",
+    "omegaDeg": "the turn the frame records: the strip's at the start of its scan, the plate's at the end of its; both scans turn the sample at half the arm's rate",
+    "twoThetaStartDeg": "the arm's angle at the start of the frame's scan",
+    "twoThetaCentreDeg": "the middle of the frame's scan, where the machine's arm points",
+    "twoThetaEndDeg": "the arm's angle at the end of the frame's scan",
+    "columns": "each frame column is one step of the arm's scan, columnDeg wide"
+  },
+  "presets": [
+    {
+      "label": "Curved strip",
+      "omegaDeg": 7.5,
+      "chiDeg": 0,
+      "phiDeg": 90,
+      "twoThetaStartDeg": 15,
+      "twoThetaCentreDeg": 70,
+      "twoThetaEndDeg": 125,
+      "distanceMm": 280,
+      "wavelengthA": 1.789,
+      "pixelMm": 0.075,
+      "columnDeg": 0.1,
+      "frameRows": 200,
+      "frameColumns": 1101
+    },
+    {
+      "label": "Flat plate",
+      "omegaDeg": 70,
+      "chiDeg": 10,
+      "phiDeg": 0,
+      "twoThetaStartDeg": 0,
+      "twoThetaCentreDeg": 70,
+      "twoThetaEndDeg": 140,
+      "distanceMm": 120,
+      "wavelengthA": 1.5406,
+      "pixelMm": 0.1,
+      "columnDeg": 0.05,
+      "frameRows": 800,
+      "frameColumns": 2801,
+      "plateRows": 800,
+      "plateColumns": 400
+    }
+  ]
+}

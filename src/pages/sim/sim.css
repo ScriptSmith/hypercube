@@ -1,0 +1,783 @@
+.sim {
+  /* Own names with fallbacks, so the sim keeps its look if the shared tool palette changes. */
+  --s-bg: var(--bg, #0b0e16);
+  --s-surface: var(--surface, #151a26);
+  --s-line: var(--line, #262e40);
+  --s-ink: var(--ink, #eef1f7);
+  --s-muted: var(--muted, #8d97ab);
+  --s-accent: var(--accent, #ffcc33);
+  --s-line-strong: var(--line-strong, #39435a);
+  --s-faint: var(--faint, #626c80);
+  --s-raised: var(--surface-2, #19202f);
+  --s-hover: var(--surface-3, #212a3c);
+  --good: #38d39f;
+  --wait: #ffcc33;
+  --bad: #ff5a4f;
+  --adult: #5ce0e0;
+  --child: #ff8c1a;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  font:
+    13px/1.4 system-ui,
+    sans-serif;
+  color: var(--s-ink);
+  background: var(--s-bg);
+}
+
+.sim button,
+.sim select,
+.sim input {
+  font: inherit;
+  color: var(--s-ink);
+  background-color: var(--s-bg);
+  border: 1px solid var(--s-line);
+  border-radius: 4px;
+  padding: 3px 7px;
+}
+
+.sim button {
+  cursor: pointer;
+}
+
+.sim button:hover {
+  border-color: var(--s-muted);
+}
+
+/* Header: a title row, then labelled groups whose controls wrap inside them. */
+.sim-bar {
+  --control-h: 28px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 14px 7px;
+  background: var(--s-surface);
+  border-bottom: 1px solid var(--s-line);
+}
+
+.sim-bar button,
+.sim-bar select,
+.sim-bar input:not([type="checkbox"]),
+.sim-focusbar button,
+.sim-focusbar select {
+  height: var(--control-h);
+  min-height: 0;
+  padding: 0 10px;
+  border-color: var(--s-line-strong);
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.sim-bar button,
+.sim-focusbar button {
+  background-color: var(--s-raised);
+}
+
+.sim-bar button:hover,
+.sim-focusbar button:hover {
+  border-color: var(--s-muted);
+  background-color: var(--s-hover);
+}
+
+.sim-bar select,
+.sim-focusbar select {
+  /* Size to the chosen option, not the longest one, where the browser can. */
+  field-sizing: content;
+  max-width: 14em;
+  padding-right: 24px;
+  text-overflow: ellipsis;
+  background-position:
+    right 13px center,
+    right 8px center;
+}
+
+.sim-bar input[type="number"] {
+  width: 3.6em;
+  padding: 0 0 0 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-bar input[aria-invalid="true"] {
+  border-color: var(--bad);
+}
+
+.sim-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sim-title {
+  flex: none;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.sim-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--s-muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-summary.has-errors {
+  color: var(--bad);
+}
+
+.sim-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sim-bar button[aria-pressed="true"] {
+  border-color: var(--s-muted);
+  background-color: var(--s-hover);
+}
+
+.sim .sim-fold {
+  width: var(--control-h);
+  padding: 0;
+  color: var(--s-muted);
+}
+
+.sim-fold svg {
+  transition: transform 0.15s;
+}
+
+.sim-fold[aria-expanded="false"] svg {
+  transform: rotate(180deg);
+}
+
+/* Setup and App share the first line, Network and View the second. */
+.sim-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sim-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px 24px;
+}
+
+.sim-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The app's options can be many, so the group takes the rest of its line and wraps inside. */
+.sim-group-app {
+  flex: 1 1 520px;
+}
+
+.sim-group-label {
+  flex: none;
+  display: flex;
+  align-items: center;
+  height: var(--control-h);
+  margin: 0;
+  color: var(--s-faint);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.sim-group-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-width: 0;
+}
+
+.sim-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--s-muted);
+  white-space: nowrap;
+}
+
+.sim-field code,
+.sim-value {
+  color: var(--s-ink);
+}
+
+.sim-room {
+  display: inline-block;
+  max-width: 7.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.sim-size {
+  gap: 5px;
+}
+
+.sim-bar .sim-size input {
+  width: 5em;
+}
+
+.sim-size > span:first-child {
+  margin-right: 2px;
+}
+
+.sim-times,
+.sim-unit {
+  color: var(--s-faint);
+}
+
+.sim-unit {
+  margin-right: 6px;
+}
+
+.sim-bar .sim-pin {
+  width: 4.6em;
+}
+
+.sim-bar .sim-address {
+  field-sizing: content;
+  width: 20em;
+  min-width: 20em;
+  max-width: 30em;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.sim-bar .sim-secret {
+  width: 7.5em;
+}
+
+.sim-message {
+  color: var(--s-faint);
+  font-size: 12px;
+}
+
+.sim-message:empty {
+  display: none;
+}
+
+.sim-message.is-error {
+  color: var(--bad);
+}
+
+/* Checkboxes as quiet toggles: a dot that lights when on. */
+.sim-check {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--s-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sim-check input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.sim-check span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--control-h);
+  padding: 0 9px 0 8px;
+  border: 1px solid var(--s-line);
+  border-radius: 5px;
+}
+
+.sim-check span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--s-muted);
+}
+
+.sim-check:hover span {
+  color: var(--s-ink);
+}
+
+.sim-check input:checked + span {
+  color: var(--s-ink);
+  border-color: var(--s-line-strong);
+  background: var(--s-raised);
+}
+
+.sim-check input:checked + span::before {
+  background: var(--s-accent);
+  box-shadow: none;
+}
+
+.sim-check input:focus-visible + span {
+  outline: 2px solid var(--s-accent);
+  outline-offset: 1px;
+}
+
+.sim-apps {
+  position: relative;
+  color: var(--s-muted);
+}
+
+.sim-apps summary {
+  display: flex;
+  align-items: center;
+  height: var(--control-h, 28px);
+  cursor: pointer;
+  padding: 0 10px;
+  border: 1px solid var(--s-line-strong);
+  border-radius: 5px;
+  background: var(--s-bg);
+  color: var(--s-ink);
+}
+
+.sim-apps-list {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 14em;
+  max-height: 60vh;
+  overflow: auto;
+  padding: 8px 10px;
+  background: var(--s-surface);
+  border: 1px solid var(--s-line);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.5);
+}
+
+.sim-apps-list .sim-check span {
+  border-color: transparent;
+  background: none;
+}
+
+.sim-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.sim-inline > .sim-message {
+  margin-left: -6px;
+}
+
+.sim-hint {
+  flex: none;
+  color: var(--s-faint);
+  font-size: 12px;
+}
+
+@media (max-width: 1150px) {
+  .sim-hint {
+    display: none;
+  }
+}
+
+.sim-muted {
+  color: var(--s-muted);
+}
+
+@media (pointer: coarse) {
+  .sim-bar,
+  .sim-focusbar {
+    --control-h: 36px;
+  }
+}
+
+.sim-stage {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sim-scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sim-floor {
+  stroke: var(--s-muted);
+  stroke-width: 1;
+}
+
+.sim-tick {
+  stroke: var(--s-muted);
+}
+
+.sim-scene-text {
+  fill: var(--s-muted);
+  font-size: 11px;
+}
+
+.sim-zone-label {
+  fill: var(--s-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sim-zone-note {
+  fill: var(--s-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.sim-corner {
+  stroke: var(--s-accent);
+  stroke-dasharray: 6 5;
+}
+
+.sim-ball {
+  fill: none;
+  stroke: rgb(238 241 247 / 0.2);
+  stroke-width: 1;
+}
+
+.sim-ball-outline {
+  fill: rgb(238 241 247 / 0.04);
+  stroke: rgb(238 241 247 / 0.55);
+  stroke-width: 1.25;
+}
+
+.sim-hang {
+  stroke: var(--s-muted);
+  stroke-width: 1.5;
+}
+
+.sim-person {
+  fill: rgb(238 241 247 / 0.16);
+  stroke: rgb(238 241 247 / 0.55);
+  stroke-width: 1;
+}
+
+.sim-person-label {
+  fill: var(--s-muted);
+  font-size: 10px;
+}
+
+.sim.hide-people .sim-people {
+  display: none;
+}
+
+.sim-frame {
+  position: absolute;
+  overflow: hidden;
+  background: #000;
+  outline: var(--bezel, 1px) solid #2c3344;
+}
+
+.sim.hide-bezels .sim-frame {
+  outline: none;
+}
+
+.sim-frame iframe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border: 0;
+  transform-origin: 0 0;
+  /* Matching the play page's scheme keeps an unloaded frame transparent rather than white. */
+  color-scheme: light;
+  background: transparent;
+}
+
+.sim-seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: var(--bezel, 1px);
+  transform: translateX(-50%);
+  background: #2c3344;
+  pointer-events: none;
+}
+
+.sim.hide-bezels .sim-seam {
+  display: none;
+}
+
+.sim-reach {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed var(--adult);
+  pointer-events: none;
+}
+
+.sim-reach-child {
+  border-top-color: var(--child);
+}
+
+.sim-reach span {
+  position: absolute;
+  right: 2px;
+  top: 1px;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--adult);
+  text-shadow: 0 0 2px #000;
+}
+
+.sim-reach-child span {
+  color: var(--child);
+}
+
+.sim.hide-reach .sim-reach {
+  display: none;
+}
+
+.sim-note {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  text-align: center;
+  color: var(--s-muted);
+  font-size: 11px;
+  background: repeating-linear-gradient(135deg, #0b0e16 0 8px, #11151f 8px 16px);
+  pointer-events: none;
+}
+
+.sim-note[hidden] {
+  display: none;
+}
+
+/* Badges sit outside their frames, so they never cover what a frame draws. */
+.sim-badge {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.sim-badge[data-at="above"] {
+  justify-content: flex-end;
+  transform: translateY(-100%);
+}
+
+.sim.hide-badges .sim-badge {
+  display: none;
+}
+
+.sim .sim-badge button {
+  pointer-events: auto;
+  padding: 1px 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  background: rgb(11 14 22 / 0.85);
+  border-color: rgb(141 151 171 / 0.5);
+}
+
+.sim-badge-main {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+  min-width: 0;
+  text-align: left;
+}
+
+.sim-badge-qr {
+  flex: none;
+}
+
+.sim-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--s-muted);
+}
+
+.sim-dot[data-tone="good"] {
+  background: var(--good);
+}
+
+.sim-dot[data-tone="wait"] {
+  background: var(--wait);
+}
+
+.sim-dot[data-tone="bad"] {
+  background: var(--bad);
+}
+
+.sim-hub {
+  color: var(--s-accent);
+  font-weight: 700;
+}
+
+.sim-errs {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.sim-detail {
+  display: none;
+  color: var(--s-muted);
+}
+
+.sim-badge.is-roomy .sim-detail {
+  display: inline;
+}
+
+.sim-hub[hidden],
+.sim-errs[hidden] {
+  display: none;
+}
+
+.sim-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgb(5 7 13 / 0.96);
+}
+
+.sim-focusbar {
+  --control-h: 28px;
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 22;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 6px 12px;
+  background: var(--s-surface);
+  border-bottom: 1px solid var(--s-line);
+}
+
+.sim.is-focusing .sim-backdrop {
+  display: block;
+}
+
+.sim.is-focusing .sim-focusbar {
+  display: flex;
+}
+
+.sim-frame.is-focused {
+  position: fixed;
+  z-index: 21;
+}
+
+.sim .sim-back {
+  background: var(--s-accent);
+  color: #05070d;
+  border-color: var(--s-accent);
+  font-weight: 600;
+}
+
+.sim-focus-status {
+  font-variant-numeric: tabular-nums;
+}
+
+.sim-qr-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgb(5 7 13 / 0.7);
+}
+
+.sim-qr-layer[hidden] {
+  display: none;
+}
+
+.sim-qr {
+  width: min(420px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: 16px 18px;
+  background: var(--s-surface);
+  border: 1px solid var(--s-line);
+  border-radius: 8px;
+}
+
+.sim-qr h2 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.sim-qr p {
+  margin: 8px 0;
+}
+
+.sim-qr-code {
+  display: flex;
+  justify-content: center;
+}
+
+.sim-qr-code svg {
+  width: min(280px, 100%);
+  height: auto;
+  border-radius: 4px;
+}
+
+.sim-qr-url {
+  display: block;
+  margin-top: 8px;
+  font:
+    11px/1.4 ui-monospace,
+    monospace;
+  color: var(--s-muted);
+  word-break: break-all;
+}
+
+.sim-qr-warn {
+  margin: 10px 0;
+  padding: 8px 10px;
+  border-left: 3px solid var(--wait);
+  background: rgb(255 204 51 / 0.08);
+}
+
+.sim-qr-note {
+  color: var(--s-muted);
+}
+
+.sim-qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}

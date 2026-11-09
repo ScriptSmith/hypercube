@@ -1,0 +1,60 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm build
+      # A branch other than main gets a preview URL instead of the production site.
+      - run: pnpm dlx wrangler@4.145.0 pages deploy dist --project-name=hypercube --branch="$GITHUB_REF_NAME"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # The same build as a Worker (wrangler.jsonc). Other branches upload a version with a preview
+      # URL and leave the live Worker as it is.
+      - run: |
+          if [ "$GITHUB_REF_NAME" = main ]; then
+            pnpm dlx wrangler@4.145.0 deploy
+          else
+            pnpm dlx wrangler@4.145.0 versions upload
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      # A copy on GitHub Pages too. Pages needs a public repo on the free plan, so this waits for one.
+      - if: github.ref == 'refs/heads/main' && !github.event.repository.private
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  pages:
+    needs: deploy
+    if: github.ref == 'refs/heads/main' && !github.event.repository.private
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/deploy-pages@v5

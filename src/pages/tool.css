@@ -1,0 +1,359 @@
+/*
+ * Base tokens and elements shared by the landing, sim and admin pages. Page layouts live
+ * next to each page. Element rules use :where() so any class overrides them.
+ */
+:root {
+  color-scheme: dark;
+  --bg: #0b0e16;
+  --surface: #121725;
+  --surface-2: #19202f;
+  --surface-3: #212a3c;
+  --line: #262e40;
+  --line-strong: #39435a;
+  --ink: #eef1f7;
+  --muted: #8d97ab;
+  --faint: #626c80;
+  --accent: #ffcc33;
+  --accent-ink: #1c1604;
+  --danger: #ff6a5f;
+  --ok: #38d39f;
+  --tone-1: #3fa9f5;
+  --tone-2: #ff8c1a;
+  --tone-3: #38d39f;
+  --tone-4: #e05ce0;
+  --radius: 8px;
+  --radius-sm: 5px;
+  --control-h: 34px;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font:
+    15px/1.5 var(--sans),
+    sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --control-h: 42px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+:where(h1, h2, h3, h4) {
+  margin: 0;
+  line-height: 1.2;
+  font-weight: 650;
+}
+
+:where(p) {
+  margin: 0;
+}
+
+:where(a) {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}
+
+:where(code, kbd, samp) {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+:where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Buttons. `.btn` also styles links that act as buttons. */
+:where(button),
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: var(--control-h);
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+:where(button:hover),
+.btn:hover {
+  background: var(--surface-3);
+}
+
+:where(button:disabled),
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn-primary:hover {
+  background: #ffd75c;
+}
+
+.btn-quiet {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn-quiet:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Text inputs and selects. */
+:where(input[type="text"], input[type="password"], input[type="url"], input[type="number"]),
+:where(select, textarea) {
+  min-height: var(--control-h);
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+:where(select) {
+  padding-right: 30px;
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    right 15px center,
+    right 10px center;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+:where(input[type="text"]:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:where(input, select, textarea):focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+:where(input, textarea)[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+/* Segmented control: native radios inside labels, so arrow keys work. */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  max-width: 100%;
+}
+
+.seg label {
+  position: relative;
+  display: inline-flex;
+}
+
+.seg input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.seg label > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: calc(var(--control-h) - 6px);
+  padding: 0 11px;
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 550;
+  white-space: nowrap;
+}
+
+.seg input:hover + span {
+  color: var(--ink);
+}
+
+.seg input:checked + span {
+  background: var(--surface-3);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.seg input:focus-visible + span {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.seg input:disabled + span {
+  opacity: 0.4;
+}
+
+/* Switch: a checkbox with role="switch". */
+input.switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 22px;
+  margin: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  background: var(--bg);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+input.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s;
+}
+
+input.switch:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+input.switch:checked::after {
+  background: var(--accent-ink);
+  transform: translateX(16px);
+}
+
+/* Range slider. */
+input[type="range"] {
+  width: 100%;
+  height: var(--control-h);
+  margin: 0;
+  background: transparent;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.hint {
+  color: var(--faint);
+  font-size: 13px;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Form fields, built by src/pages/landing/controls.ts. */
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-group {
+  display: grid;
+  gap: 12px;
+}
+
+.field > select,
+.field > input {
+  width: 100%;
+}
+
+.field .hint {
+  margin-top: -1px;
+}
+
+.input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.input-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+input.pin {
+  max-width: 200px;
+  font-family: var(--mono);
+  letter-spacing: 0.25em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}

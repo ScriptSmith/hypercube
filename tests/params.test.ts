@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { coerceOptions, parseParams } from "../src/core/params";
+import { coerceOptions, parseParams, presetOptions } from "../src/core/params";
+import type { OptionDef } from "../src/core/types";
 
 describe("parseParams", () => {
   it("reads identity, setup and options", () => {
@@ -62,11 +63,54 @@ describe("text options", () => {
   });
 });
 
+describe("text options a link may set", () => {
+  const defs: OptionDef[] = [
+    { type: "text", key: "note", title: "Note", maxLength: 12, default: "", url: true },
+    { type: "text", key: "ask", title: "Question", maxLength: 12, default: "" },
+  ];
+
+  it("take printable text from the URL, cut to length, and only where the option allows", () => {
+    const p = parseParams("?app=x&o.note=See%20you%0Asoon%20everyone&o.ask=Click&o.x.note=Bye");
+    expect(coerceOptions(p.options, defs)).toEqual({ note: "See you soon", ask: "" });
+    expect(coerceOptions({ note: "  " }, defs)).toEqual({ note: "", ask: "" });
+    // And for an app a picker starts.
+    expect(presetOptions("x", p.options, undefined, defs)).toEqual({ note: "Bye" });
+    expect(presetOptions("x", { "x.ask": "Click" }, undefined, defs)).toEqual({});
+  });
+});
+
 describe("apps options", () => {
   it("keeps app ids and app:variant presets, dropping anything else", () => {
     const out = coerceOptions({ apps: "hockey,hockey:defence,Bad Id,tinyworld:,x:y:z,tinyworld" }, [
       { type: "apps", key: "apps", title: "Apps", default: [] },
     ]);
     expect(out.apps).toBe("hockey,hockey:defence,tinyworld");
+  });
+});
+
+describe("presetOptions", () => {
+  const defs: OptionDef[] = [
+    { type: "number", key: "hour", title: "Hour", min: 0, max: 23, step: 1, default: 17 },
+    { type: "boolean", key: "show", title: "Show", default: true },
+    { type: "text", key: "message", title: "Message", maxLength: 10, default: "" },
+  ];
+
+  it("reads only the options set for that app, and never text, from the URL", () => {
+    const p = parseParams("?app=menu&o.cycle=1&o.glass.hour=21&o.glass.message=Hi&o.other.hour=3");
+    expect(presetOptions("glass", p.options, undefined, defs)).toEqual({ hour: 21 });
+    expect(presetOptions("other", p.options, undefined, defs)).toEqual({ hour: 3 });
+    expect(presetOptions("none", p.options, undefined, defs)).toEqual({});
+    // The picker's own options aren't an app's.
+    expect(presetOptions("cycle", p.options, undefined, defs)).toEqual({});
+  });
+
+  it("lets admin's values, text included, win over the URL's", () => {
+    const p = parseParams("?app=menu&o.glass.hour=9&o.glass.show=0");
+    const admin = { hour: 12.4, message: "Goodbye for now", stray: true };
+    expect(presetOptions("glass", p.options, admin, defs)).toEqual({
+      hour: 12,
+      show: false,
+      message: "Goodbye fo",
+    });
   });
 });

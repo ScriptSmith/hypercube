@@ -2,9 +2,9 @@
 <title id="title">Network Graphs</title>
 <style>
 .x{opacity:0;}
-.f3-1{animation:f3-1 12s ease-in-out -5.4s infinite;}
+.f3-1{animation:f3-1 12s ease-in-out -0.8s infinite;}
 @keyframes f3-1{0%{opacity:0;}25%{opacity:0;}33.33%{opacity:1;}66.67%{opacity:1;}66.75%{opacity:0;}100%{opacity:0;}}
-.f3-2{animation:f3-2 12s ease-in-out -5.4s infinite;}
+.f3-2{animation:f3-2 12s ease-in-out -0.8s infinite;}
 @keyframes f3-2{0%{opacity:0;}58.33%{opacity:0;}66.67%{opacity:1;}91.67%{opacity:1;}100%{opacity:0;}}
 @media (prefers-reduced-motion:reduce){.x{animation:none;}}
 </style>

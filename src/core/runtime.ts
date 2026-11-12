@@ -7,7 +7,7 @@ import { createLoop } from "./loop";
 import { captureLogs } from "./logs";
 import { connectRoom, localClock, offlineChannel } from "./net";
 import { cleanOptionValues } from "./options";
-import { coerceOptions, type Params, parseParams } from "./params";
+import { coerceOptions, type Params, parseParams, presetOptions } from "./params";
 import { preserveDrawingBuffers } from "./preserve";
 import { getManifest, loadApp } from "./registry";
 import { createRng, hashSeed } from "./rng";
@@ -206,6 +206,10 @@ export const boot = async (host: HTMLElement = document.body): Promise<void> => 
     options: override?.options,
     ...pickSetup(override),
   });
+  const presetsFor = (app: string): OptionValues => {
+    const m = getManifest(app);
+    return m ? presetOptions(app, params.options, override?.launch?.[app], m.options) : {};
+  };
   const setupFor = (cfg: FrameConfig): SetupInfo => {
     const base = baseSetup();
     return {
@@ -298,10 +302,13 @@ export const boot = async (host: HTMLElement = document.body): Promise<void> => 
         ? cfg.variant
         : (manifest.variants?.[0]?.id ?? "default");
     // Options from an override or a launch are checked like URL ones before the app sees them.
-    // A launched app starts from its own defaults, not the picker's URL options.
-    const options = cfg.options
-      ? cleanOptionValues(cfg.options, manifest.options)
-      : coerceOptions(launched ? {} : params.options, manifest.options);
+    // A launched app starts from its own defaults and the operator's presets for it, not the
+    // picker's URL options.
+    const options = launched
+      ? cleanOptionValues({ ...presetsFor(cfg.app), ...cfg.options }, manifest.options)
+      : cfg.options
+        ? cleanOptionValues(cfg.options, manifest.options)
+        : coerceOptions(params.options, manifest.options);
 
     const appRoot = document.createElement("div");
     appRoot.style.cssText = `position:absolute;inset:0;overflow:hidden;isolation:isolate;background:${PALETTE.background};`;
@@ -408,6 +415,7 @@ export const boot = async (host: HTMLElement = document.body): Promise<void> => 
           );
         },
         returned: how.returned ?? null,
+        presets: presetsFor,
         room,
         search: location.search,
         errors: () => state.errors,

@@ -314,9 +314,14 @@ test("a late frame-context that leaves the setup alone updates the app's identit
 type System = {
   launch(
     app: string,
-    opts?: { stay?: { ms: number; graceMs: number }; homeControl?: boolean },
+    opts?: {
+      stay?: { ms: number; graceMs: number };
+      homeControl?: boolean;
+      options?: Record<string, unknown>;
+    },
   ): void;
   returned: string | null;
+  presets(app: string): Record<string, unknown>;
 };
 
 /** App a is a picker: it keeps its system access and records why it came back each time. */
@@ -447,4 +452,39 @@ test("a launch can leave out the Home control and keep the app for good", async 
   await vi.advanceTimersByTimeAsync(3 * 60 * 60 * S);
   expect(window.__hypercube!.app).toBe("b");
   expect(player.resets).toBe(1);
+});
+
+test("a launched app starts from the operator's options for it, from the URL and from admin", async () => {
+  window.history.replaceState({}, "", "/play/?app=a&o.n=5&o.poll.n=4&o.poll.ask=From%20the%20URL");
+  const { picker } = pickerAndPlayer();
+  const seen: unknown[] = [];
+  h.loaders.set("poll", async () => ({
+    mount: (ctx: { options: unknown }) => {
+      seen.push(ctx.options);
+      return { reset() {}, dispose() {} };
+    },
+  }));
+  const { boot } = await import("../../src/core/runtime");
+  void boot(document.body);
+  await flush();
+  // The picker's own options and URL text don't reach it.
+  expect(picker.system!.presets("poll")).toEqual({ n: 4 });
+  expect(picker.system!.presets("nope")).toEqual({});
+  picker.system!.launch("poll");
+  await flush();
+  expect(seen[0]).toEqual({ ask: "", n: 4, mode: "a" });
+
+  h.admin!.applyOverride({ launch: { poll: { ask: "Goodbye\nfor now", n: 3 } } });
+  await flush();
+  expect(window.__hypercube!.app).toBe("a");
+  expect(picker.system!.presets("poll")).toEqual({ ask: "Goodbye for", n: 3 });
+  picker.system!.launch("poll");
+  await flush();
+  expect(seen[1]).toEqual({ ask: "Goodbye for", n: 3, mode: "a" });
+  // What the launcher passes wins over a preset.
+  h.admin!.applyOverride({ launch: { poll: { ask: "Goodbye\nfor now", n: 3 } } });
+  await flush();
+  picker.system!.launch("poll", { options: { n: 1 } });
+  await flush();
+  expect(seen[2]).toEqual({ ask: "Goodbye for", n: 1, mode: "a" });
 });

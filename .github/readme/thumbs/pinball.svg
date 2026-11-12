@@ -2,11 +2,11 @@
 <title id="title">Pinball</title>
 <style>
 .x{opacity:0;}
-.f4-1{animation:f4-1 16s ease-in-out -11s infinite;}
+.f4-1{animation:f4-1 16s ease-in-out -4.9s infinite;}
 @keyframes f4-1{0%{opacity:0;}18.75%{opacity:0;}25%{opacity:1;}50%{opacity:1;}50.06%{opacity:0;}100%{opacity:0;}}
-.f4-2{animation:f4-2 16s ease-in-out -11s infinite;}
+.f4-2{animation:f4-2 16s ease-in-out -4.9s infinite;}
 @keyframes f4-2{0%{opacity:0;}43.75%{opacity:0;}50%{opacity:1;}75%{opacity:1;}75.06%{opacity:0;}100%{opacity:0;}}
-.f4-3{animation:f4-3 16s ease-in-out -11s infinite;}
+.f4-3{animation:f4-3 16s ease-in-out -4.9s infinite;}
 @keyframes f4-3{0%{opacity:0;}68.75%{opacity:0;}75%{opacity:1;}93.75%{opacity:1;}100%{opacity:0;}}
 @media (prefers-reduced-motion:reduce){.x{animation:none;}}
 </style>

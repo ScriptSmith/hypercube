@@ -57,6 +57,8 @@ For example, `venue=wall:7680x2880:16x6:0.1,bank:8` or `venue=sphere::3:2.5`. Ev
 
 Text options (`type: "text"`, such as an operator's own poll question) are set only through admin, because anyone can load the public site with any URL: frames ignore them in a URL, signed admin commands carry them, and the runtime cleans them against the app's schema before mounting. Pickers never show them to visitors. An option's `when` shows it only while another option has one of the listed values.
 
+An app picker (`app=menu`) starts each app from that app's defaults. `o.<app>.<name>` on the picker's URL sets one option for one app it starts, for example `app=menu&o.cycle=1&o.ticker.speed=slow`. On a frame that runs a picker, admin's app sheet can also keep a whole set of options, text included, for whenever the picker starts that app ("Use when the picker starts ...").
+
 ## Writing an app
 
 1. Create `src/apps/<id>/manifest.ts` (default export `AppManifest`) and `src/apps/<id>/index.ts` (export `mount(ctx: AppContext): AppInstance`). Copy `src/apps/idle/` as a starting point.

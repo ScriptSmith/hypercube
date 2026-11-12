@@ -170,6 +170,8 @@ export type OptionDef =
       type: "text";
       maxLength: number;
       default: string;
+      /** True lets the URL set it as well (`o.<key>`), for text that is safe to take from a link. */
+      url?: boolean;
     });
 
 export interface VariantDef {
@@ -311,6 +313,13 @@ export interface SystemAccess {
    * launched app went idle, its `stay` ran out, or it failed to start. Null otherwise.
    */
   returned: Returned | null;
+  /**
+   * The option values the operator set for an app this frame may launch, from the URL's
+   * `o.<app>.<name>` parameters and from admin, checked against that app's schema. Only the
+   * options the operator set; empty for an unknown app. A launch starts from these wherever it
+   * passes no value of its own.
+   */
+  presets(app: string): OptionValues;
   room: Room | null;
   /** The page's raw query string. */
   search: string;

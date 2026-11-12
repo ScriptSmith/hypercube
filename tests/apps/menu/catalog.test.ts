@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { offers, parseEntries, runsSolo } from "../../../src/apps/menu/catalog";
+import { offers, parseEntries, runsSolo, withPresets } from "../../../src/apps/menu/catalog";
+import { defaultOptions } from "../../../src/apps/menu/choices";
 import menu from "../../../src/apps/menu/manifest";
 import { optionShown } from "../../../src/core/options";
 import type { AppManifest, FrameKind, SetupSupport } from "../../../src/core/types";
@@ -196,5 +197,51 @@ describe("menu manifest", () => {
         .map((o) => o.key);
     expect(shownOn({})).toEqual(["apps", "cycle", "nopicker", "nohome"]);
     expect(shownOn({ nopicker: true })).toEqual(["apps", "cycle", "nopicker"]);
+  });
+});
+
+describe("withPresets", () => {
+  const glass = app("glass", {
+    options: [
+      { type: "number", key: "hour", title: "Hour", min: 0, max: 23, step: 1, default: 17 },
+      { type: "boolean", key: "show", title: "Show", default: true },
+      { type: "text", key: "message", title: "Message", maxLength: 40, default: "" },
+      { type: "apps", key: "apps", title: "Apps", default: [] },
+      {
+        type: "enum",
+        key: "sand",
+        title: "Sand",
+        values: [
+          { id: "gold", title: "Gold" },
+          { id: "white", title: "White" },
+        ],
+        default: "gold",
+      },
+    ],
+  });
+
+  it("makes the operator's values the defaults a launch starts from", () => {
+    const preset = withPresets(glass, {
+      hour: 9,
+      show: false,
+      message: "Goodbye",
+      apps: "a,b",
+      sand: "white",
+    });
+    expect(defaultOptions(preset)).toEqual({
+      hour: 9,
+      show: false,
+      message: "Goodbye",
+      apps: "a,b",
+      sand: "white",
+    });
+    expect(defaultOptions(glass).hour).toBe(17);
+  });
+
+  it("leaves an app with no presets, or values of the wrong type, as it is", () => {
+    expect(withPresets(glass, {})).toBe(glass);
+    expect(defaultOptions(withPresets(glass, { hour: "9", show: 1 }))).toEqual(
+      defaultOptions(glass),
+    );
   });
 });

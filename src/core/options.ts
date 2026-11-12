@@ -36,7 +36,7 @@ const decimals = (step: number): number => {
 };
 
 /** Clamp to the range, snap to the step counted from `min`, and drop float noise. */
-const snap = (value: number, min: number, max: number, step: number): number => {
+export const snap = (value: number, min: number, max: number, step: number): number => {
   const clamped = Math.min(max, Math.max(min, value));
   if (!(step > 0)) return clamped;
   let k = Math.round((clamped - min) / step);

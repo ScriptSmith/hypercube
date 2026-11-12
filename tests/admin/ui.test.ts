@@ -594,6 +594,116 @@ describe("panel", () => {
     expect(sent.at(-1)).toMatchObject({ args: { config: { app: "poll", options } } });
   });
 
+  it("keeps an app's options for when a frame's picker starts it", async () => {
+    // A picker's roster entry names the app it is showing; its state names the picker.
+    const roster = [entry("p1", { app: "duel" }), entry("p2"), ROSTER[3]!];
+    const room = fakeRoom("admin-1", roster);
+    const { sent, reply, link } = fakeLink("admin-1");
+    panel = createPanel({
+      mode: "page",
+      room,
+      link,
+      apps: [...medleyApps(), pollApp],
+      onLock: () => {},
+    });
+    document.body.append(panel.el);
+    const also = "Use when the picker starts Poll";
+    const has = (text: string) =>
+      [...panel.el.querySelectorAll("button")].some((b) => b.textContent?.trim() === text);
+
+    // Not on a frame that runs an ordinary app.
+    panel.el.querySelector<HTMLElement>('.hca-row[data-frame="p2"]')?.click();
+    buttonByText(panel.el, "App").click();
+    buttonByText(panel.el, "Poll").click();
+    expect(has(also)).toBe(false);
+    buttonByText(panel.el, "Back").click();
+    panel.el.querySelector<HTMLElement>('.hca-row[data-frame="p2"]')?.click();
+
+    panel.el.querySelector<HTMLElement>('.hca-row[data-frame="p1"]')?.click();
+    reply("p1", { app: "medley", override: null });
+    buttonByText(panel.el, "App").click();
+    // The sheet opens on the app the picker is showing.
+    expect(has("Use when the picker starts Duel")).toBe(true);
+    buttonByText(panel.el, "Medley").click();
+    expect(has("Use when the picker starts Medley")).toBe(false);
+    buttonByText(panel.el, "Poll").click();
+    buttonByText(panel.el, "Your own").click();
+    const ask = textField("ask");
+    if (!ask) throw new Error("no text field");
+    ask.value = "Thanks for coming";
+    ask.dispatchEvent(new Event("input"));
+    ask.dispatchEvent(new Event("change"));
+    buttonByText(panel.el, also).click();
+    await Promise.resolve();
+    const options = { question: "custom", ask: "Thanks for coming", a1: "Yes", lane: false };
+    const last = sent.at(-1);
+    expect(last).toMatchObject({
+      cmd: "set",
+      target: { k: "frames", ids: ["p1"] },
+      args: { config: { launch: { poll: options } }, merge: true },
+    });
+    const args = last?.args as { config: Record<string, unknown> } | undefined;
+    expect(args?.config).not.toHaveProperty("app");
+
+    // Opening the sheet again starts from what the picker holds.
+    reply("p1", { app: "medley", override: { launch: { poll: options } } });
+    buttonByText(panel.el, "App").click();
+    buttonByText(panel.el, "Poll").click();
+    expect(textField("ask")?.value).toBe("Thanks for coming");
+  });
+
+  it("types a number option in a box on the page, and steps it on a frame", async () => {
+    const clock: AppManifest = {
+      id: "clock",
+      title: "Clock",
+      category: "visual",
+      blurb: "Counts to a time.",
+      setups: [{ setup: "solo", kinds: ["panel"] }],
+      network: "none",
+      options: [
+        { type: "number", key: "hour", title: "Hour", min: 0, max: 23, step: 1, default: 17 },
+      ],
+    };
+    const openClock = (mode: "frame" | "page") => {
+      const room = fakeRoom("admin-1", ROSTER);
+      const f = fakeLink("admin-1");
+      panel = createPanel({ mode, room, link: f.link, apps: [clock], onLock: () => {} });
+      document.body.append(panel.el);
+      panel.el.querySelector<HTMLElement>('.hca-row[data-frame="p1"]')?.click();
+      buttonByText(panel.el, "App").click();
+      buttonByText(panel.el, "Clock").click();
+      return f;
+    };
+    const box = () => panel.el.querySelector<HTMLInputElement>('input[data-option="hour"]');
+
+    const { sent } = openClock("page");
+    const hour = box();
+    if (!hour) throw new Error("no number box");
+    expect(hour.type).toBe("number");
+    expect(hour.value).toBe("17");
+    expect(panel.el.querySelector(".hca-stepper")).toBeNull();
+    hour.value = "9";
+    hour.dispatchEvent(new Event("input"));
+    // Typing doesn't redraw the sheet.
+    expect(box()).toBe(hour);
+    hour.value = "40";
+    hour.dispatchEvent(new Event("input"));
+    hour.dispatchEvent(new Event("change"));
+    expect(hour.value).toBe("23");
+    hour.value = "8";
+    hour.dispatchEvent(new Event("input"));
+    buttonByText(panel.el, "Run Clock").click();
+    await Promise.resolve();
+    expect(sent.at(-1)).toMatchObject({ args: { config: { app: "clock", options: { hour: 8 } } } });
+    panel.dispose();
+    document.body.replaceChildren();
+
+    // A frame has no keyboard.
+    openClock("frame");
+    expect(box()).toBeNull();
+    expect(panel.el.querySelector(".hca-stepper-value")?.textContent).toBe("17");
+  });
+
   it("hides an option when its condition fails, whatever the kinds", () => {
     const roster = [
       entry("w1", { zone: "A", display: "W1", kind: "wall", role: "solo" }),

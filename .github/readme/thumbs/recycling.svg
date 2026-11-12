@@ -2,7 +2,7 @@
 <title id="title">Recycling Rush</title>
 <style>
 .x{opacity:0;}
-.f2-1{animation:f2-1 8s ease-in-out -2.4s infinite;}
+.f2-1{animation:f2-1 8s ease-in-out -7.4s infinite;}
 @keyframes f2-1{0%{opacity:0;}37.5%{opacity:0;}50%{opacity:1;}87.5%{opacity:1;}100%{opacity:0;}}
 @media (prefers-reduced-motion:reduce){.x{animation:none;}}
 </style>

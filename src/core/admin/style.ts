@@ -123,6 +123,7 @@ align-items:start;}
 .hca-input{width:100%;min-height:var(--hca-target,44px);padding:0.4em 0.6em;border:0.07em solid ${LINE_STRONG};
 border-radius:0.45em;background:${P.background};color:${P.foreground};font:inherit;
 -webkit-user-select:text;user-select:text;}
+.hca-number{max-width:9em;}
 .hca-input:focus{outline:none;border-color:${P.accent};}
 .hca-input:disabled{opacity:0.7;}
 

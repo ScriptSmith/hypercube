@@ -7,6 +7,8 @@ export interface FrameConfig {
   app?: string;
   variant?: string | null;
   options?: OptionValues;
+  /** Options for apps this frame launches (an app picker), by app id. */
+  launch?: Record<string, OptionValues>;
   setup?: SetupInfo["name"];
   role?: SetupInfo["role"];
   pos?: number;
@@ -37,6 +39,10 @@ const MAX_OPTION_TEXT = 800;
  * in one signed envelope with room for the rest of a frame's state.
  */
 const MAX_OPTIONS_TEXT = 2000;
+
+/** An app id as a key of `launch`. No underscores, so never `__proto__`. */
+const APP_ID = /^[a-z0-9-]{1,32}$/;
+const MAX_LAUNCH_APPS = 8;
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
@@ -74,6 +80,24 @@ const cleanOptions = (v: unknown): OptionValues | null => {
   return out;
 };
 
+/** Options by launched app, all together within the size one `options` may have. */
+const cleanLaunch = (v: unknown): Record<string, OptionValues> | null => {
+  if (!isRecord(v)) return null;
+  const out: Record<string, OptionValues> = {};
+  let n = 0;
+  let size = 0;
+  for (const [app, values] of Object.entries(v)) {
+    if (n >= MAX_LAUNCH_APPS || !APP_ID.test(app)) continue;
+    const options = cleanOptions(values);
+    if (!options) continue;
+    size += JSON.stringify(app).length + JSON.stringify(options).length + 2;
+    if (size > MAX_OPTIONS_TEXT) break;
+    out[app] = options;
+    n++;
+  }
+  return n > 0 ? out : null;
+};
+
 /** A FrameConfig with every field checked; unknown or invalid fields are dropped. */
 export const cleanConfig = (v: unknown): FrameConfig | null => {
   if (!isRecord(v)) return null;
@@ -83,6 +107,8 @@ export const cleanConfig = (v: unknown): FrameConfig | null => {
   else if (typeof v.variant === "string" && ID.test(v.variant)) out.variant = v.variant;
   const options = cleanOptions(v.options);
   if (options) out.options = options;
+  const launch = cleanLaunch(v.launch);
+  if (launch) out.launch = launch;
   if (oneOf(v.setup, SETUPS)) out.setup = v.setup;
   if (oneOf(v.role, ROLES)) out.role = v.role;
   const pos = int(v.pos, 0, 63);
@@ -95,14 +121,19 @@ export const cleanConfig = (v: unknown): FrameConfig | null => {
   return out;
 };
 
-/** `patch` over `base`. A new app drops the old app's variant and options. */
+/**
+ * `patch` over `base`. A new app drops the old app's variant and options. Options for launched
+ * apps are kept, and replaced one app at a time.
+ */
 export const mergeConfig = (base: FrameConfig | null, patch: FrameConfig): FrameConfig => {
   const out: FrameConfig = { ...base };
   if (patch.app !== undefined && patch.app !== base?.app) {
     delete out.variant;
     delete out.options;
   }
-  return { ...out, ...patch };
+  const merged: FrameConfig = { ...out, ...patch };
+  if (base?.launch && patch.launch) merged.launch = { ...base.launch, ...patch.launch };
+  return merged;
 };
 
 export const sameConfig = (a: FrameConfig | null, b: FrameConfig | null): boolean =>

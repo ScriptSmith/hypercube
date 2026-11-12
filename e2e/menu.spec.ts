@@ -111,6 +111,19 @@ test("a sphere's picker is never seen and changes app every few minutes", async 
   expect(problems).toEqual([]);
 });
 
+test("a picker starts an app with the options its URL gives for that app", async ({ page }) => {
+  const problems = watchPage(page);
+  await page.setViewportSize(viewportFor({ width: 4096, height: 2048 }));
+  await page.goto(
+    "play/?app=menu&kind=sphere&fit=4096x2048&o.apps=ticker&o.ticker.rings=3&o.ticker.style=white&o.ticker.message1=Typed",
+  );
+  await expect.poll(() => app(page)).toBe("ticker");
+  const options = await page.evaluate(() => window.__hypercube?.options);
+  // Operator text never comes from a URL, for a launched app either.
+  expect(options).toMatchObject({ rings: "3", style: "white", speed: "normal", message1: "" });
+  expect(problems).toEqual([]);
+});
+
 test("a picker can start apps without a Home button", async ({ page }) => {
   const problems = watchPage(page);
   await page.setViewportSize(viewportFor({ width: 1080, height: 1920 }));

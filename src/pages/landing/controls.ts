@@ -1,3 +1,4 @@
+import { snap } from "../../core/options";
 import { h, nextId } from "./dom";
 
 export interface Choice<T extends string> {
@@ -158,6 +159,47 @@ export const sliderField = (opts: {
   });
   input.value = String(opts.value);
   return field(opts.label, id, false, h("div", { class: "slider" }, input, out), hintEl(opts.hint));
+};
+
+/**
+ * A box for a number. `onInput` fires for each valid value typed and must not re-render the
+ * form, or the box would lose focus. Leaving the box puts the value in range and on its step.
+ */
+export const numberField = (opts: {
+  name: string;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  hint?: string;
+  onInput(value: number): void;
+}): HTMLElement => {
+  const id = nextId(opts.name);
+  let current = opts.value;
+  const input = h("input", {
+    id,
+    type: "number",
+    class: "number",
+    min: opts.min,
+    max: opts.max,
+    step: opts.step,
+    inputmode: Number.isInteger(opts.step) && opts.min >= 0 ? "numeric" : "decimal",
+    autocomplete: "off",
+    "data-focus": opts.name,
+    oninput: () => {
+      const n = Number(input.value);
+      if (input.value.trim() === "" || !Number.isFinite(n)) return;
+      current = snap(n, opts.min, opts.max, opts.step);
+      opts.onInput(current);
+    },
+    onchange: () => {
+      input.value = String(current);
+    },
+  });
+  input.value = String(opts.value);
+  const range = `${opts.min} to ${opts.max}`;
+  return field(opts.label, id, false, input, hintEl(opts.hint ?? range));
 };
 
 export const textField = (opts: {

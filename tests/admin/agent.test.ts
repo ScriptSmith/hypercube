@@ -252,6 +252,41 @@ describe("overrides", () => {
     });
     expect(mergeConfig(null, { app: "a" })).toEqual({ app: "a" });
   });
+
+  it("keeps options for launched apps across an app change, one app at a time", () => {
+    const base = {
+      app: "a",
+      options: { x: 1 },
+      launch: { glass: { hour: 9 }, tape: { on: true } },
+    };
+    expect(mergeConfig(base, { app: "b" })).toEqual({ app: "b", launch: base.launch });
+    expect(mergeConfig(base, { launch: { glass: { message: "Bye" } } })).toEqual({
+      ...base,
+      launch: { glass: { message: "Bye" }, tape: { on: true } },
+    });
+    expect(mergeConfig({ app: "a" }, { launch: { glass: { hour: 1 } } })).toEqual({
+      app: "a",
+      launch: { glass: { hour: 1 } },
+    });
+  });
+
+  it("cleanConfig checks options for launched apps", () => {
+    const launch: Record<string, unknown> = {
+      glass: { hour: 9, message: "Bye", bad: { nested: true }, "no dots.": 1 },
+      "Bad App": { hour: 1 },
+      __proto__x: { hour: 1 },
+      tape: "nope",
+    };
+    expect(cleanConfig({ launch })).toEqual({ launch: { glass: { hour: 9, message: "Bye" } } });
+    expect(cleanConfig({ launch: {} })).toEqual({});
+    expect(cleanConfig(JSON.parse('{"launch":{"__proto__":{"hour":1}}}'))).toEqual({});
+    const many = Object.fromEntries(Array.from({ length: 20 }, (_, i) => [`app${i}`, { n: i }]));
+    expect(Object.keys(cleanConfig({ launch: many })?.launch ?? {})).toHaveLength(8);
+    const big = Object.fromEntries(
+      Array.from({ length: 8 }, (_, i) => [`app${i}`, { text: "x".repeat(700) }]),
+    );
+    expect(JSON.stringify(cleanConfig({ launch: big })?.launch).length).toBeLessThan(2100);
+  });
 });
 
 describe("security", () => {
@@ -392,10 +427,18 @@ describe("operator text", () => {
     const options: Record<string, string> = {};
     // Control characters cost six bytes each in JSON, quotes two.
     for (let i = 0; i < 32; i++) options[`k${i}`] = '\u0001"'.repeat(30);
-    const config = cleanConfig({ app: "x".repeat(64), variant: "v".repeat(64), options });
+    const config = cleanConfig({
+      app: "x".repeat(64),
+      variant: "v".repeat(64),
+      options,
+      launch: { glass: options, tape: options },
+    });
     const kept = JSON.stringify(config?.options ?? {}).length;
     expect(kept).toBeGreaterThan(1700);
     expect(kept).toBeLessThan(2100);
+    const launched = JSON.stringify(config?.launch ?? {}).length;
+    expect(launched).toBeGreaterThan(1700);
+    expect(launched).toBeLessThan(2100);
     const state: FrameState = {
       ref: "r".repeat(64),
       cmd: "set",

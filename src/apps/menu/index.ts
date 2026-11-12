@@ -10,7 +10,7 @@ import type {
 } from "../../core/types";
 import { FONT, withAlpha } from "../../core/ui";
 import { appArt } from "../../pages/landing/art";
-import { type Offer, offers, parseEntries } from "./catalog";
+import { type Offer, offers, parseEntries, withPresets } from "./catalog";
 import { type ChooseHandle, type ChooseState, chooseCss, createChoose, fitChoose } from "./choose";
 import { defaultOptions, needsChoice, startVariant } from "./choices";
 import { type Deck, markRan, peekNext } from "./cycle";
@@ -147,7 +147,7 @@ const mountHidden = (ctx: AppContext, list: Offer[], stay: Stay): AppInstance =>
 export const mount = (ctx: AppContext): AppInstance => {
   const hidden = ctx.frame.kind === "sphere" || ctx.options.nopicker === true;
   const cycling = ctx.options.cycle === true;
-  const all = listApps();
+  const all = listApps().map((app) => withPresets(app, ctx.system.presets(app.id)));
   // A frame that changes app by itself never lands on a tool unless the operator listed it.
   const list = offers(
     all,

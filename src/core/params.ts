@@ -1,4 +1,4 @@
-import { appTokens } from "./options";
+import { appTokens, cleanOptionValues, cutText } from "./options";
 import type { FrameKind, HostRole, OptionDef, OptionValues, Reach, Role, SetupName } from "./types";
 import { parseVenue, type VenuePatch } from "./venue";
 
@@ -6,7 +6,10 @@ import { parseVenue, type VenuePatch } from "./venue";
 export interface Params {
   app: string;
   variant: string | null;
-  /** Raw `o.<name>` values; the app's option schema coerces them. */
+  /**
+   * Raw `o.<name>` values; the app's option schema coerces them. `o.<app>.<name>` values are for
+   * an app this frame launches (see `presetOptions`).
+   */
   options: Record<string, string>;
   setup: SetupName | null;
   role: Role | null;
@@ -180,7 +183,8 @@ export const coerceOptions = (
   for (const def of defs ?? []) {
     const value = raw[def.key];
     if (def.type === "text") {
-      out[def.key] = def.default;
+      const text = def.url && value !== undefined ? cutText(value, def.maxLength) : "";
+      out[def.key] = text || def.default;
     } else if (def.type === "boolean") {
       out[def.key] = value === undefined ? def.default : bool(value);
     } else if (def.type === "apps") {
@@ -191,6 +195,35 @@ export const coerceOptions = (
     } else {
       out[def.key] = def.values.some((v) => v.id === value) ? (value as string) : def.default;
     }
+  }
+  return out;
+};
+
+/**
+ * The option values an operator set for `app` on a frame that launches it (an app picker): the
+ * URL's `o.<app>.<name>` values, then `admin`'s over them, each checked against the app's schema.
+ * Only options the operator set are returned, so a launch can tell them from defaults. Text comes
+ * only from admin, as for any app.
+ */
+export const presetOptions = (
+  app: string,
+  raw: Record<string, string>,
+  admin: OptionValues | undefined,
+  defs: readonly OptionDef[] | undefined,
+): OptionValues => {
+  const prefix = `${app}.`;
+  const own: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (key.startsWith(prefix)) own[key.slice(prefix.length)] = value;
+  }
+  const fromUrl = coerceOptions(own, defs);
+  const fromAdmin = cleanOptionValues(admin, defs);
+  const out: OptionValues = {};
+  for (const def of defs ?? []) {
+    const fromLink = def.type !== "text" || def.url === true;
+    const url = fromLink && Object.hasOwn(own, def.key) ? fromUrl[def.key] : undefined;
+    const set = admin && Object.hasOwn(admin, def.key) ? fromAdmin[def.key] : url;
+    if (set !== undefined) out[def.key] = set;
   }
   return out;
 };

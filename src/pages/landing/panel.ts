@@ -27,7 +27,15 @@ import {
   validatePin,
   validateRoom,
 } from "./config";
-import { type Choice, choiceField, section, sliderField, switchField, textField } from "./controls";
+import {
+  type Choice,
+  choiceField,
+  numberField,
+  section,
+  sliderField,
+  switchField,
+  textField,
+} from "./controls";
 import { diagramSvg } from "./diagram";
 import { copyText, h } from "./dom";
 import { artElement, CATEGORY_TITLE } from "./gallery";
@@ -414,7 +422,7 @@ export const createPanel = (
       });
     }
     if (def.type === "number") {
-      return sliderField({
+      return numberField({
         name: `o.${def.key}`,
         label: def.title,
         value: Number(value),

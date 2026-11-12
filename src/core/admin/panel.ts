@@ -1,4 +1,4 @@
-import { optionDefault, optionShown } from "../options";
+import { optionDefault, optionShown, snap } from "../options";
 import type { AppManifest, FrameKind, OptionDef, OptionValue, Room } from "../types";
 import { type IconName, iconElement } from "../ui";
 import { type FrameState, IDENTIFY_MS, NOTICE_MAX, readState } from "./agent";
@@ -58,6 +58,13 @@ export interface PanelHandle {
 }
 
 type Confirmable = "reset" | "reload" | "clear";
+
+interface Sheet {
+  content: HTMLElement[];
+  go: HTMLButtonElement;
+  /** A second action, shown under `go`. */
+  also?: HTMLButtonElement;
+}
 type View =
   | { k: "list" }
   | { k: "confirm"; cmd: Confirmable }
@@ -553,6 +560,37 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
     return wrap;
   };
 
+  /** A box to type a number in, on the admin page. Frames have no keyboard and get a stepper. */
+  const numberInput = (
+    def: Extract<OptionDef, { type: "number" }>,
+    value: OptionValue,
+    onInput: (v: number) => void,
+    onCommit: () => void,
+  ): HTMLElement => {
+    let current = typeof value === "number" ? value : def.default;
+    const input = make("input", "hca-input hca-number");
+    input.type = "number";
+    input.min = String(def.min);
+    input.max = String(def.max);
+    input.step = String(def.step);
+    input.autocomplete = "off";
+    input.dataset.option = def.key;
+    input.value = String(current);
+    input.addEventListener("input", () => {
+      const n = Number(input.value);
+      if (input.value.trim() === "" || !Number.isFinite(n)) return;
+      current = snap(n, def.min, def.max, def.step);
+      onInput(current);
+    });
+    input.addEventListener("change", () => {
+      input.value = String(current);
+      onCommit();
+    });
+    const wrap = make("div");
+    wrap.append(input, make("div", "hca-field-note", `${def.min} to ${def.max}`));
+    return wrap;
+  };
+
   const optionControl = (
     def: Exclude<OptionDef, { type: "text" }>,
     value: OptionValue,
@@ -580,7 +618,7 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
     return stepper(n, def.min, def.max, def.step, (v) => v.toFixed(decimals(def.step)), onChange);
   };
 
-  const appSheet = (): { content: HTMLElement[]; go: HTMLButtonElement } => {
+  const appSheet = (): Sheet => {
     const content: HTMLElement[] = [];
     const apps = [...opts.apps].sort((a, b) => Number(!!a.hidden) - Number(!!b.hidden));
     content.push(
@@ -625,6 +663,10 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
         .map((d) => d.key)
         .join(",");
     const shown = shownKeys();
+    // Redrawing drops focus and can swallow a tap on Run, so only when it matters.
+    const commit = () => {
+      if (shownKeys() !== shown) render();
+    };
     for (const def of defs) {
       if (!optionShown(def, defs, appDraft.options, kinds)) continue;
       const only = def.kinds;
@@ -639,14 +681,13 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
             ? `${def.title} (${only.map((k) => KIND_PLURAL[k]).join(" and ")} only)`
             : def.title,
           def.type === "text"
-            ? textInput(def, value, setDraft, () => {
-                // Redrawing drops focus and can swallow a tap on Run, so only when it matters.
-                if (shownKeys() !== shown) render();
-              })
-            : optionControl(def, value, (v) => {
-                setDraft(v);
-                render();
-              }),
+            ? textInput(def, value, setDraft, commit)
+            : def.type === "number" && page
+              ? numberInput(def, value, setDraft, commit)
+              : optionControl(def, value, (v) => {
+                  setDraft(v);
+                  render();
+                }),
         ),
       );
     }
@@ -668,10 +709,26 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
       "is-primary",
     );
     go.disabled = !m;
-    return { content, go };
+    // On frames running an app picker, the same options can instead be kept for whenever the
+    // picker starts this app, which is how operator text reaches an app it cycles through.
+    // The roster names the app a frame shows now; its state names the one it is set to run.
+    const pickers = targetRows().every((r) => {
+      const st = states.get(r.frame);
+      const home = st?.override?.app ?? st?.app ?? r.app;
+      const options = opts.apps.find((a) => a.id === home)?.options ?? [];
+      return home !== m?.id && options.some((d) => d.type === "apps");
+    });
+    if (!m || !pickers || targetRows().length === 0) return { content, go };
+    const also = button(`Use when the picker starts ${m.title}`, () => {
+      const config: FrameConfig = { launch: { [m.id]: appDraft.options } };
+      view = { k: "list" };
+      void send("set", { config, merge: true, keep: keepDraft }, `Picker options for ${m.title}`);
+      render();
+    });
+    return { content, go, also };
   };
 
-  const setupSheet = (): { content: HTMLElement[]; go: HTMLButtonElement } => {
+  const setupSheet = (): Sheet => {
     const keep = { value: undefined, label: "Keep" };
     const update = (patch: FrameConfig) => {
       setupDraft = { ...setupDraft, ...patch };
@@ -833,6 +890,14 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
         if (v !== undefined) options[d.key] = v;
       }
     }
+    // Or what their picker already holds for this app.
+    const held = app !== null && first?.app !== app ? first?.launch?.[app] : undefined;
+    if (m && held && overrides.every((o) => JSON.stringify(o) === JSON.stringify(first))) {
+      for (const d of m.options ?? []) {
+        const v = held[d.key];
+        if (v !== undefined) options[d.key] = v;
+      }
+    }
     return { app, variant, options };
   };
 
@@ -851,7 +916,7 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
 
   const renderSheet = (k: "app" | "setup" | "notice") => {
     const titles = { app: "Run an app", setup: "Change setup", notice: "Show a notice" };
-    const sheet = k === "app" ? appSheet() : k === "setup" ? setupSheet() : noticeSheet();
+    const sheet: Sheet = k === "app" ? appSheet() : k === "setup" ? setupSheet() : noticeSheet();
     const sheetHead = make("div", "hca-sheet-head");
     sheetHead.append(
       button(
@@ -892,6 +957,7 @@ export const createPanel = (opts: PanelOptions): PanelHandle => {
       foot.append(lasts);
     }
     foot.append(sheet.go);
+    if (sheet.also) foot.append(sheet.also);
     body.replaceChildren(sheetHead, sheetBody, foot);
     body.classList.remove("is-list");
     sheetBody.scrollTop = scroll;

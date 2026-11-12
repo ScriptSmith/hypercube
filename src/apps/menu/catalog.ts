@@ -1,4 +1,11 @@
-import type { AppManifest, FrameKind, OptionValue, VariantDef } from "../../core/types";
+import type {
+  AppManifest,
+  FrameKind,
+  OptionDef,
+  OptionValue,
+  OptionValues,
+  VariantDef,
+} from "../../core/types";
 
 const CATEGORY_ORDER: Record<AppManifest["category"], number> = { game: 0, visual: 1, tool: 2 };
 const ENTRY = /^([a-z0-9-]+)(?::([a-z0-9-]+))?$/;
@@ -29,6 +36,30 @@ export const parseEntries = (value: OptionValue | undefined): Entry[] => {
     out.push({ id: m[1], variant: m[2] ?? null });
   }
   return out;
+};
+
+const withDefault = (def: OptionDef, value: OptionValue | undefined): OptionDef => {
+  switch (def.type) {
+    case "boolean":
+      return typeof value === "boolean" ? { ...def, default: value } : def;
+    case "number":
+      return typeof value === "number" ? { ...def, default: value } : def;
+    case "apps":
+      return typeof value === "string"
+        ? { ...def, default: value.split(",").filter((t) => t !== "") }
+        : def;
+    default:
+      return typeof value === "string" ? { ...def, default: value } : def;
+  }
+};
+
+/**
+ * `app` with the operator's presets as its options' defaults, so tiles, the choose step and a
+ * launch all start from them. The values are already checked against the app's schema.
+ */
+export const withPresets = (app: AppManifest, presets: OptionValues): AppManifest => {
+  if (!app.options || Object.keys(presets).length === 0) return app;
+  return { ...app, options: app.options.map((def) => withDefault(def, presets[def.key])) };
 };
 
 /** Whether a visitor can run `app` on its own on a frame of this kind. */

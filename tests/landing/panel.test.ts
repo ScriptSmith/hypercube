@@ -70,6 +70,33 @@ describe("landing page", () => {
     expect(sim).toMatch(/\/hypercube\/sim\/\?preset=bank&count=6&span=1&app=sparks$/);
   });
 
+  it("takes a number option in a box, kept in range and on its step", () => {
+    history.replaceState(null, "", "/hypercube/#/pucks");
+    mountLanding(document.body, apps);
+    const speed = field("o.speed");
+    if (!speed) throw new Error("no speed box");
+    expect(speed.type).toBe("number");
+    expect(speed.value).toBe("1");
+    expect(urls()[0]).toContain("o.speed=1&");
+    const type = (text: string) => {
+      speed.value = text;
+      speed.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+    type("1.5");
+    // Typing doesn't rebuild the form, so the box keeps focus.
+    expect(field("o.speed")).toBe(speed);
+    expect(urls()[0]).toContain("o.speed=1.5&");
+    type("1.234");
+    expect(urls()[0]).toContain("o.speed=1.2&");
+    // Half-typed or out of range: the last good value stands, and leaving the box shows it.
+    type("9");
+    expect(urls()[0]).toContain("o.speed=2&");
+    type("");
+    expect(urls()[0]).toContain("o.speed=2&");
+    speed.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(speed.value).toBe("2");
+  });
+
   it("switches to manual identity and back", () => {
     history.replaceState(null, "", "/hypercube/#/sparks");
     mountLanding(document.body, apps);

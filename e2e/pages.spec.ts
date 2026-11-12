@@ -89,6 +89,47 @@ test("an admin override lasts until the next reload or the browser session", asy
   expect(await app(other)).toBe("diag");
 });
 
+test("admin gives a picker options, text included, for an app it starts", async ({ context }) => {
+  const frame = await context.newPage();
+  await frame.goto(
+    `play/?app=menu&kind=sphere&fit=4096x2048&res=0.25&o.apps=ticker&o.ticker.speed=slow&room=${ROOM}&frame=e2e-picker&transport=local&ak=${AK}`,
+  );
+  const options = () => frame.evaluate(() => window.__hypercube?.options ?? null);
+  await frame.waitForFunction(() => window.__hypercube?.app === "ticker");
+  expect(await options()).toMatchObject({ speed: "slow", message1: "" });
+
+  const admin = await context.newPage();
+  await admin.goto("admin/?transport=local");
+  await admin.fill('input[data-focus="room"]', ROOM);
+  await admin.fill('input[data-focus="ak"]', AK);
+  await admin.fill('input[data-focus="pin"]', "4821");
+  await admin.click('button[type="submit"]');
+  const row = admin.locator('.hca-row[data-frame="e2e-picker"]');
+  await expect(row).toBeVisible({ timeout: 30_000 });
+  await row.click();
+  await admin.getByRole("button", { name: "App", exact: true }).click();
+  // The sheet opens on the app the picker is showing.
+  await expect(admin.getByRole("button", { name: "Ticker Ring", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await admin.getByRole("button", { name: "Fast", exact: true }).click();
+  await admin.locator('input.hca-input[data-option="message1"]').fill("See you next time");
+  await admin.getByRole("button", { name: "Use when the picker starts Ticker Ring" }).click();
+  await expect
+    .poll(async () => (await options())?.message1, { timeout: 15_000 })
+    .toBe("See you next time");
+  // The frame still runs its picker, which started the app again with the sheet's values.
+  expect(await frame.evaluate(() => window.__hypercube?.app)).toBe("ticker");
+  expect(await options()).toMatchObject({ speed: "fast", rings: "2" });
+  await expect(row.locator(".hca-tag")).toContainText(["override"]);
+
+  // The picker's own reloads keep them for the browser session.
+  await frame.reload();
+  await frame.waitForFunction(() => window.__hypercube?.app === "ticker");
+  expect(await options()).toMatchObject({ speed: "fast", message1: "See you next time" });
+});
+
 test("an admin link asks for the PIN, then Change room drops its keys", async ({ page }) => {
   const pv = await derivePinVerifier("4821", AK);
   await page.goto(`admin/?room=${ROOM}&ak=${AK}&pv=${pv}&transport=local`);

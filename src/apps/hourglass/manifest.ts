@@ -104,7 +104,6 @@ const manifest: AppManifest = {
       title: "Your message, shown all day",
       maxLength: TEXT_MAX,
       default: "",
-      url: true,
     },
     {
       type: "text",
@@ -112,7 +111,6 @@ const manifest: AppManifest = {
       title: "Your line for when the sand has run out",
       maxLength: TEXT_MAX,
       default: "",
-      url: true,
     },
   ],
   network: "none",

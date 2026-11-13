@@ -170,8 +170,6 @@ export type OptionDef =
       type: "text";
       maxLength: number;
       default: string;
-      /** True lets the URL set it as well (`o.<key>`), for text that is safe to take from a link. */
-      url?: boolean;
     });
 
 export interface VariantDef {

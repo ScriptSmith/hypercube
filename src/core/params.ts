@@ -1,4 +1,4 @@
-import { appTokens, cleanOptionValues, cutText } from "./options";
+import { appTokens, cleanOptionValues } from "./options";
 import type { FrameKind, HostRole, OptionDef, OptionValues, Reach, Role, SetupName } from "./types";
 import { parseVenue, type VenuePatch } from "./venue";
 
@@ -183,8 +183,7 @@ export const coerceOptions = (
   for (const def of defs ?? []) {
     const value = raw[def.key];
     if (def.type === "text") {
-      const text = def.url && value !== undefined ? cutText(value, def.maxLength) : "";
-      out[def.key] = text || def.default;
+      out[def.key] = def.default;
     } else if (def.type === "boolean") {
       out[def.key] = value === undefined ? def.default : bool(value);
     } else if (def.type === "apps") {
@@ -220,8 +219,7 @@ export const presetOptions = (
   const fromAdmin = cleanOptionValues(admin, defs);
   const out: OptionValues = {};
   for (const def of defs ?? []) {
-    const fromLink = def.type !== "text" || def.url === true;
-    const url = fromLink && Object.hasOwn(own, def.key) ? fromUrl[def.key] : undefined;
+    const url = def.type !== "text" && Object.hasOwn(own, def.key) ? fromUrl[def.key] : undefined;
     const set = admin && Object.hasOwn(admin, def.key) ? fromAdmin[def.key] : url;
     if (set !== undefined) out[def.key] = set;
   }

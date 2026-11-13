@@ -63,22 +63,6 @@ describe("text options", () => {
   });
 });
 
-describe("text options a link may set", () => {
-  const defs: OptionDef[] = [
-    { type: "text", key: "note", title: "Note", maxLength: 12, default: "", url: true },
-    { type: "text", key: "ask", title: "Question", maxLength: 12, default: "" },
-  ];
-
-  it("take printable text from the URL, cut to length, and only where the option allows", () => {
-    const p = parseParams("?app=x&o.note=See%20you%0Asoon%20everyone&o.ask=Click&o.x.note=Bye");
-    expect(coerceOptions(p.options, defs)).toEqual({ note: "See you soon", ask: "" });
-    expect(coerceOptions({ note: "  " }, defs)).toEqual({ note: "", ask: "" });
-    // And for an app a picker starts.
-    expect(presetOptions("x", p.options, undefined, defs)).toEqual({ note: "Bye" });
-    expect(presetOptions("x", { "x.ask": "Click" }, undefined, defs)).toEqual({});
-  });
-});
-
 describe("apps options", () => {
   it("keeps app ids and app:variant presets, dropping anything else", () => {
     const out = coerceOptions({ apps: "hockey,hockey:defence,Bad Id,tinyworld:,x:y:z,tinyworld" }, [

@@ -318,18 +318,18 @@ test.describe("hourglass", () => {
     expect(problems).toEqual([]);
   });
 
-  test("hourglass: the operator's lines come from the URL or admin; the message shows all day", async ({
+  test("hourglass: the operator's lines come only through admin; the message shows all day", async ({
     page,
   }) => {
     const problems = watchPage(page);
     await page.setViewportSize(viewportFor(FEED));
     const room = "e2ehourglassown";
     const url = `play/?app=hourglass&kind=sphere&fit=4096x2048&frame=e2e-hourglass&room=${room}&transport=local&bots=0&debug=1&res=0.5`;
-    // These two lines may come from the URL, and admin's replace them.
+    // A URL can't carry the text.
     await page.goto(`${url}&o.message=Hello%20from%20a%20link&o.ending=Bye`);
     await ready(page);
-    expect((await state(page)).message).toBe("Hello from a link");
-    expect((await setTime(page, 20)).time).toBe("Bye");
+    expect((await state(page)).message).toBe("");
+    expect((await setTime(page, 20)).time).toBe("Time's up");
 
     const message = `Thank you for coming ${String.fromCodePoint(0x1f389)} see you again soon`;
     await leaveOverride(page, room, "e2e-hourglass", { message, ending: "Goodnight" });
